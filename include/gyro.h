@@ -6,7 +6,7 @@
 #include "pico/binary_info.h"
 
 void gyro_init();
-static void gyro_reset();
+void gyro_reset();
 int read_gyro(int16_t gyro[3]);
 
 #endif

@@ -15,7 +15,7 @@ void gyro_init() {
     gyro_reset();
 }
 
-static void gyro_reset() {
+void gyro_reset() {
     uint8_t buffer[] = {0x6B, 0x80};
     i2c_write_blocking(i2c1, addr, buffer, 2, false);
     sleep_ms(100);
