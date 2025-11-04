@@ -10,12 +10,12 @@ int main() {
     int res;
 
     for (;;) {
-        res = read_gyro(gyro);
-        if (res < 0) {
-            printf("Read failed, %d\n", res);
-        } else {
-            printf("Gyro Values: %d, %d, %d\n", gyro[0], gyro[1], gyro[2]);
-        }
-        sleep_ms(100);
+        // res = read_gyro(gyro);
+        // if (res < 0) {
+        //     printf("Read failed, %d\n", res);
+        // } else {
+        //     printf("Gyro Values: %d, %d, %d\n", gyro[0], gyro[1], gyro[2]);
+        // }
+        // sleep_ms(100);
     }
 }

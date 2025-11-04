@@ -8,5 +8,6 @@
 void gyro_init();
 void gyro_reset();
 int read_gyro(int16_t gyro[3]);
+void gyro_intr_init();
 
 #endif
