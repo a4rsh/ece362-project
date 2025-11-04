@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "i2c.h": "c"
+        "*.c": "c",
+        "i2c.h": "c",
+        "gyro.h": "c"
     }
 }
