@@ -16,6 +16,7 @@ int main()
     for (;;)
     {
         res = updateAngles(&angleX, &angleY, &angleZ);
+        // res = read_gyro(gyro);
         if (res < 0)
         {
             printf("Read failed, %d\n", res);

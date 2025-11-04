@@ -9,6 +9,8 @@ static int addr = 0x68;
 uint8_t gyro_addr = 0x43;
 uint8_t accel_addr = 0x3B;
 
+uint8_t gryo_config_reg = 27;
+
 float gyroOffsets[] = {0, 0, 0};
 float accelOffsets[] = {0, 0, 0};
 

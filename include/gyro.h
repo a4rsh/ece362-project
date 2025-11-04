@@ -11,8 +11,10 @@
 
 void gyro_init();
 void gyro_reset();
+void read_gyro();
+void gyro_intr_init();
 int getCalibrationOffsets();
-int read_gyro(float gyro[3]);
+//void read_gyro();
 int read_accel(float accel[3]);
 
 #endif
