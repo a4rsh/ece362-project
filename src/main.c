@@ -8,11 +8,14 @@ int main()
 
     gyro_init();
 
-    float gyro[3], accel[3];
     int res;
+    float angleX, angleY, angleZ;
+    float gyro[3];
+
 
     for (;;)
     {
+        res = updateAngles(&angleX, &angleY, &angleZ);
         // res = read_gyro(gyro);
         if (res < 0)
         {
@@ -20,8 +23,8 @@ int main()
         }
         else
         {
-            printf("Gyro Values: %0.3f, %0.3f, %0.3f\n", gyro[0], gyro[1], gyro[2]);
+            printf("Gyro Angles: %0.3f, %0.3f, %0.3f\n", angleX, angleY, angleZ);
         }
-        sleep_ms(100);
+        sleep_ms(1000);
     }
 }

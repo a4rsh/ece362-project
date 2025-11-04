@@ -12,6 +12,8 @@ static int addr = 0x68;
 uint8_t gyro_addr = 0x43;
 uint8_t accel_addr = 0x3B;
 
+uint8_t gryo_config_reg = 27;
+
 float gyroOffsets[] = {0, 0, 0};
 float accelOffsets[] = {0, 0, 0};
 
@@ -52,16 +54,18 @@ void gyro_intr_init()
     irq_set_enabled(IO_IRQ_BANK0, true);
 
     preInterval = to_ms_since_boot(get_absolute_time());
+    getCalibrationOffsets();
 }
 
 void gyro_reset()
 {
     uint8_t buffer[] = {0x6B, 0x80};
     i2c_write_timeout_us(i2c0, addr, buffer, 2, false, 0);
+    i2c_write_blocking(i2c0, addr, buffer, 2, false);
     sleep_ms(100);
 
     buffer[1] = 0x00;
-    i2c_write_timeout_us(i2c0, addr, buffer, 2, false, 0);
+    i2c_write_blocking(i2c0, addr, buffer, 2, false);
     sleep_ms(10);
 }
 
@@ -205,7 +209,7 @@ int read_accel(float accel[3])
     return res;
 }
 
-// // Need to implement this with non-blocking / another cpu core
+// Need to implement this with non-blocking / another cpu core
 // int read_gyro(float gyro[3])
 // {
 //     uint8_t buffer[6];
@@ -221,6 +225,5 @@ int read_accel(float accel[3])
 //     {
 //         gyro[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]) / gyro_to_degsec - gyroOffsets[i];
 //     }
-//     printf("Gyro Values: %d, %d, %d\n", gyro[0], gyro[1], gyro[2]);
-//     // return res;
+//     return res;
 // }
