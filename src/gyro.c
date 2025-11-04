@@ -39,6 +39,7 @@ void gyro_init()
     gyro_reset();
 
     preInterval = to_ms_since_boot(get_absolute_time());
+    getCalibrationOffsets();
 }
 
 void gyro_reset()
