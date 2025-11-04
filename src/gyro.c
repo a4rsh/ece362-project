@@ -1,8 +1,6 @@
 
 #include "gyro.h"
 
-#define CALIBRATE_SAMPLES 500
-
 const int I2C_GYRO_SDA = 28;
 const int I2C_GYRO_SCL = 29;
 
@@ -17,7 +15,18 @@ float accelOffsets[] = {0, 0, 0};
 float acc_to_g = 16384.0;
 float gyro_to_degsec = 131.0;
 
+unsigned long preInterval;
+
 // Gyro and acceleration data buffers
+
+static float wrap(float angle, float limit)
+{
+    while (angle > limit)
+        angle -= 2 * limit;
+    while (angle < -limit)
+        angle += 2 * limit;
+    return angle;
+}
 
 void gyro_init()
 {
@@ -28,6 +37,8 @@ void gyro_init()
     gpio_pull_up(I2C_GYRO_SCL);
     bi_decl(bi_2pins_with_func(I2C_GYRO_SDA, I2C_GYRO_SCL, GPIO_FUNC_I2C));
     gyro_reset();
+
+    preInterval = to_ms_since_boot(get_absolute_time());
 }
 
 void gyro_reset()
@@ -102,6 +113,42 @@ int getCalibrationOffsets()
 
 int updateAngles(float *angleX, float *angleY, float *angleZ)
 {
+    float gyro[3], accel[3];
+
+    int timeout = 0;
+    int res;
+    do
+    {
+        res = read_accel(accel);
+        timeout++;
+    } while (!res && timeout < 50);
+
+    if (timeout >= 50) // ERROR could not read
+        return 1;
+
+    timeout = 0;
+    do
+    {
+        res = read_gyro(gyro);
+        timeout++;
+    } while (!res && timeout < 50);
+
+    if (timeout >= 50) // ERROR could not read
+        return 1;
+
+    float sgZ = accel[2] < 0 ? -1 : 1;
+    float angleAccX = atan2(accel[1], sgZ * sqrt(accel[2] * accel[2] + accel[0] * accel[0])) * RAD_2_DEG;
+    float angleAccY = -atan2(accel[0], sqrt(accel[2] * accel[2] + accel[1] * accel[1])) * RAD_2_DEG;
+
+    unsigned long Tnew = to_ms_since_boot(get_absolute_time());
+    float dt = (Tnew - preInterval) * 1e-3;
+    preInterval = Tnew;
+
+    // Wrap x and y angles - from https://github.com/gabriel-milan/TinyMPU6050/issues/6
+
+    *angleX = wrap(DEFAULT_GYRO_COEF * (angleAccX + wrap(*angleX + gyro[0] * dt - angleAccX, 180)) + (1.0 - DEFAULT_GYRO_COEF) * angleAccX, 180);
+    *angleY = wrap(DEFAULT_GYRO_COEF * (angleAccY + wrap(*angleY + sgZ * gyro[1] * dt - angleAccY, 90)) + (1.0 - DEFAULT_GYRO_COEF) * angleAccY, 90);
+    *angleZ += gyro[2] * dt; // not wrapped
 
     return 0;
 }
