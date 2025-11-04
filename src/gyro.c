@@ -1,3 +1,4 @@
+
 #include "gyro.h"
 
 #define CALIBRATE_SAMPLES 500
@@ -15,6 +16,8 @@ float accelOffsets[] = {0, 0, 0};
 
 float acc_to_g = 16384.0;
 float gyro_to_degsec = 131.0;
+
+// Gyro and acceleration data buffers
 
 void gyro_init()
 {
@@ -41,22 +44,36 @@ void gyro_reset()
 // Calibration for gyro sensor
 // MUST BE STILL AND IN A NEUTRAL POSITION WHEN RUN
 // Done once at the beginning of game - no need to put on separate CPU core
-double getCalibrationOffsets()
+int getCalibrationOffsets()
 {
     float ag[6] = {0, 0, 0, 0, 0, 0};
+
+    // Temporary buffers for gyro and accel data
     float gyro[3], accel[3];
+
     for (int i = 0; i < CALIBRATE_SAMPLES; i++)
     {
-        // Get data from accelerometer and gyroscope
+        // Get data from accelerometer and gyroscope with 50 cycle timeout
+        int timeout = 0;
         int res;
         do
         {
             res = read_accel(accel);
-        } while (!res);
+            timeout++;
+        } while (!res && timeout < 50);
+
+        if (timeout >= 50) // ERROR could not read
+            return 1;
+
+        timeout = 0;
         do
         {
             res = read_gyro(gyro);
-        } while (!res);
+            timeout++;
+        } while (!res && timeout < 50);
+
+        if (timeout >= 50) // ERROR could not read
+            return 1;
 
         // Accumulate the values
         ag[0] += accel[0];
@@ -79,6 +96,14 @@ double getCalibrationOffsets()
     gyroOffsets[0] = ag[3] / CALIBRATE_SAMPLES;
     gyroOffsets[1] = ag[4] / CALIBRATE_SAMPLES;
     gyroOffsets[2] = ag[5] / CALIBRATE_SAMPLES;
+
+    return 0;
+}
+
+int updateAngles(float *angleX, float *angleY, float *angleZ)
+{
+
+    return 0;
 }
 
 // Need to implement this with non-blocking / another cpu core

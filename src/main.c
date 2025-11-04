@@ -7,7 +7,8 @@ int main()
     stdio_init_all();
 
     gyro_init();
-    int16_t gyro[3];
+
+    float gyro[3], accel[3];
     int res;
 
     for (;;)
@@ -19,7 +20,7 @@ int main()
         }
         else
         {
-            printf("Gyro Values: %d, %d, %d\n", gyro[0], gyro[1], gyro[2]);
+            printf("Gyro Values: %0.3f, %0.3f, %0.3f\n", gyro[0], gyro[1], gyro[2]);
         }
         sleep_ms(100);
     }

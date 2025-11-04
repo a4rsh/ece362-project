@@ -7,6 +7,8 @@
 
 void gyro_init();
 void gyro_reset();
-int read_gyro(int16_t gyro[3]);
+int getCalibrationOffsets();
+int read_gyro(float gyro[3]);
+int read_accel(float accel[3]);
 
 #endif
