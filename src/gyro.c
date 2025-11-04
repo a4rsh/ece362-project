@@ -3,6 +3,9 @@
 
 const int I2C_GYRO_SDA = 28;
 const int I2C_GYRO_SCL = 29;
+const int INTERRUPT_GYRO_PIN = 27; //TODO
+
+extern int16_t gyro[3];
 
 static int addr = 0x68;
 
