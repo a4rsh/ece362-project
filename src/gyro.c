@@ -5,7 +5,7 @@ const int I2C_GYRO_SDA = 28;
 const int I2C_GYRO_SCL = 29;
 const int INTERRUPT_GYRO_PIN = 27; // TODO
 
-extern int16_t gyro[3];
+int16_t gyro[3];
 
 static int addr = 0x68;
 
@@ -69,7 +69,7 @@ void gyro_reset()
     sleep_ms(10);
 }
 
-void read_gyro()
+int read_gyro()
 {
     uint8_t buffer[6];
     uint8_t val = 0x43;
@@ -86,7 +86,7 @@ void read_gyro()
         gyro[i] = (buffer[i * 2] << 8 | buffer[(i * 2) + 1]);
     }
     printf("Gyro Values: %d, %d, %d\n", gyro[0], gyro[1], gyro[2]);
-    // return res;
+    return res;
 }
 
 // Calibration for gyro sensor

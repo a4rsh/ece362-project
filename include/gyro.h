@@ -1,6 +1,7 @@
 #ifndef GYRO_H
 #define GYRO_H
 
+#include <stdio.h>
 #include "hardware/i2c.h"
 #include "pico/stdlib.h"
 #include "pico/binary_info.h"
@@ -11,10 +12,11 @@
 
 void gyro_init();
 void gyro_reset();
-void read_gyro();
+int read_gyro();
 void gyro_intr_init();
 int getCalibrationOffsets();
-//void read_gyro();
 int read_accel(float accel[3]);
+int getCalibrationOffsets();
+int updateAngles(float *angleX, float *angleY, float *angleZ);
 
 #endif
