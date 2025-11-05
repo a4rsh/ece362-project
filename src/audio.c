@@ -1,3 +1,10 @@
+// TODO: Loop Audio with a timer so calling function doesn't have to loop
+//       Setup timer in audio_init() with audio_update() hander 
+//       Timer gets set sample_delay_us in the future from audio_play and end of audio_update()
+
+// TODO: Fill buffer automatically using DMA
+
+
 #include "audio.h"
 
 static const uint PWM_AUDIO_RIGHT = 6;
@@ -57,7 +64,8 @@ void audio_init(void) {
     pwm_set_enabled(slice_num, true);
 
     audio_active = false;
-    buffer_pos = buffer_len = 0;
+    buffer_pos = 0;
+    buffer_len = 0;
 }
 
 bool audio_play(const char *filename, uint8_t vol, bool loop) {
@@ -69,7 +77,8 @@ bool audio_play(const char *filename, uint8_t vol, bool loop) {
         return false;
     }
 
-    buffer_pos = buffer_len = 0;
+    buffer_pos = 0;
+    buffer_len = 0;
     volume = vol;
     audio_loop = loop;
     
