@@ -1,16 +1,9 @@
-// TODO: Loop Audio with a timer so calling function doesn't have to loop
-//       Setup timer in audio_init() with audio_update() hander 
-//       Timer gets set sample_delay_us in the future from audio_play and end of audio_update()
-
-// TODO: Fill buffer automatically using DMA
-
-
 #include "audio.h"
 
 static const uint PWM_AUDIO_RIGHT = 6;
 static const uint PWM_AUDIO_LEFT = 7;
-static const uint PERIOD = 1023;
-static uint32_t sample_delay_us = 32;
+static const uint PERIOD = 255;
+static uint32_t sample_delay_us = 12;
 // sample_delay_us = (1000000 / sample_rate) - 30;
 // if (sample_delay_us < 5) sample_delay_us = 5;
 
@@ -23,13 +16,14 @@ static int16_t buffer[AUDIO_BUFFER_SIZE];
 static uint8_t volume = 128;
 static uint slice_num;
 
+static alarm_id_t audio_alarm_id = 0;
+
 
 static void audio_set_pwm(int level) {
     pwm_set_chan_level(slice_num, PWM_CHAN_A, level);
     pwm_set_chan_level(slice_num, PWM_CHAN_B, level);
 }
 
-// For refilling SD Buffer early
 static void refill_buffer(void) {
     if (!audio_active) return;
 
@@ -48,6 +42,33 @@ static void refill_buffer(void) {
     }
 }
 
+int64_t audio_update(alarm_id_t id, void *user_data) {
+    if (!audio_active) {
+        audio_set_pwm(PERIOD / 2);
+        return sample_delay_us;
+    }
+
+    if (buffer_pos >= buffer_len) {
+        refill_buffer();
+        if (!audio_active) {
+            audio_set_pwm(PERIOD / 2);
+            return sample_delay_us;
+        }
+    }
+
+    int16_t sample = buffer[buffer_pos++];
+    
+    int32_t scaled = (sample * (int32_t)volume) >> 8;
+    
+    scaled = (scaled >> 8) + (PERIOD / 2);
+    
+    if (scaled < 0) scaled = 0;
+    if (scaled > PERIOD) scaled = PERIOD;
+
+    audio_set_pwm(scaled);
+    return sample_delay_us;
+}
+
 void audio_init(void) {
     if (!sd_init()) {
         printf("SD init failed\n");
@@ -59,8 +80,8 @@ void audio_init(void) {
 
     slice_num = pwm_gpio_to_slice_num(PWM_AUDIO_RIGHT);
     pwm_set_wrap(slice_num, PERIOD);
-    pwm_set_chan_level(slice_num, PWM_CHAN_A, 512);
-    pwm_set_chan_level(slice_num, PWM_CHAN_B, 512);
+    pwm_set_chan_level(slice_num, PWM_CHAN_A, PERIOD / 2);
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, PERIOD / 2);
     pwm_set_enabled(slice_num, true);
 
     audio_active = false;
@@ -77,6 +98,8 @@ bool audio_play(const char *filename, uint8_t vol, bool loop) {
         return false;
     }
 
+    f_lseek(&audio_file, 44);  // Skip WAV header
+
     buffer_pos = 0;
     buffer_len = 0;
     volume = vol;
@@ -84,10 +107,15 @@ bool audio_play(const char *filename, uint8_t vol, bool loop) {
     
     audio_active = true;
     refill_buffer();
+    audio_alarm_id = add_alarm_in_us(sample_delay_us, audio_update, NULL, true);
     return true;
 }
 
 void audio_stop(void) {
+    if (audio_alarm_id) {
+        cancel_alarm(audio_alarm_id);
+        audio_alarm_id = 0;
+    }
     if (audio_active) f_close(&audio_file);
     audio_active = false;
     audio_set_pwm(PERIOD / 2);
@@ -95,29 +123,4 @@ void audio_stop(void) {
 
 void audio_set_volume(uint8_t vol) {
     volume = vol;
-}
-
-
-void audio_update(void) {
-    if (!audio_active) {
-        audio_set_pwm(PERIOD / 2);
-        sleep_us(sample_delay_us);
-        return;
-    }
-
-    if (buffer_pos >= (buffer_len * 3 / 4)) {
-        refill_buffer();
-    }
-
-    int16_t sample = buffer[buffer_pos++];
-    
-    int32_t scaled = (sample * (int32_t)volume) >> 8;
-    
-    scaled = (scaled >> 6) + (PERIOD / 2);
-    
-    if (scaled < 0) scaled = 0;
-    if (scaled > PERIOD) scaled = PERIOD;
-
-    audio_set_pwm(scaled);
-    sleep_us(sample_delay_us);
 }

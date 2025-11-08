@@ -19,10 +19,10 @@ void test_audio(void) {
 
     audio_init();
 
-    audio_play("test3.wav", 128, false);
-
-    while (1) {
-        audio_update();
+    audio_play("car.wav", 128, true);
+    
+    for(;;) {
+        tight_loop_contents();
     }
 }
 

@@ -14,6 +14,6 @@ void audio_init(void);
 bool audio_play(const char *filename, uint8_t volume, bool loop);
 void audio_stop(void);
 void audio_set_volume(uint8_t volume);
-void audio_update(void);
+int64_t audio_update(alarm_id_t id, void *user_data);
 
 #endif
