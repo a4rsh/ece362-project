@@ -12,11 +12,12 @@
 
 void gyro_init();
 void gyro_reset();
-int read_gyro();
+int read_gyro(float gyro[3]);
 void gyro_intr_init();
 int getCalibrationOffsets();
 int read_accel(float accel[3]);
-int getCalibrationOffsets();
 int updateAngles(float *angleX, float *angleY, float *angleZ);
+int setGyroConfig(int config_num);
+int setAccConfig(int config_num);
 
 #endif
