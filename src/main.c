@@ -11,8 +11,8 @@ int main()
     stdio_init_all();
     sleep_ms(2000);
 
-    test_gyro();
-    // test_audio();
+    // test_gyro();
+    test_audio();
 }
 
 void test_audio(void)
@@ -20,7 +20,7 @@ void test_audio(void)
 
     audio_init();
 
-    audio_play("car.wav", 128, true);
+    audio_play("car.wav", 255, false);
 
     for (;;)
     {

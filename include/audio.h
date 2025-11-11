@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define AUDIO_BUFFER_SIZE 2048
+#define AUDIO_BUFFER_SIZE 80000
 
 void audio_init(void);
 bool audio_play(const char *filename, uint8_t volume, bool loop);

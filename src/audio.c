@@ -12,7 +12,7 @@ static bool audio_active = false;
 static bool audio_loop = false;
 static uint32_t buffer_pos = 0;
 static uint32_t buffer_len = 0;
-static int16_t buffer[AUDIO_BUFFER_SIZE];
+static int16_t buffer[AUDIO_BUFFER_SIZE] = {0};
 static uint8_t volume = 128;
 static uint slice_num;
 
@@ -35,7 +35,7 @@ static void refill_buffer(void) {
     if (buffer_len == 0) {
         if (audio_loop) {
             f_lseek(&audio_file, 44);
-            refill_buffer();
+            // refill_buffer();
         } else {
             audio_active = false;
         }
@@ -43,13 +43,22 @@ static void refill_buffer(void) {
 }
 
 int64_t audio_update(alarm_id_t id, void *user_data) {
+
+    
+
     if (!audio_active) {
         audio_set_pwm(PERIOD / 2);
         return sample_delay_us;
     }
 
     if (buffer_pos >= buffer_len) {
-        refill_buffer();
+        // refill_buffer();
+        buffer_pos = 0; 
+        if (!audio_loop)
+        {
+            audio_stop(); 
+            return 0; 
+        }
         if (!audio_active) {
             audio_set_pwm(PERIOD / 2);
             return sample_delay_us;
