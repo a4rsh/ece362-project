@@ -8,10 +8,10 @@
 
 spi_inst_t *sd = spi0; // the SPI interface to use for the SD card
 
-const int SD_MISO = 16;
-const int SD_CS   = 17;
-const int SD_SCK  = 18;
-const int SD_MOSI = 19;
+const int SD_MISO = 36;
+const int SD_CS   = 37;
+const int SD_SCK  = 38;
+const int SD_MOSI = 35;
 
 static FATFS fs;
 

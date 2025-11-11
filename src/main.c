@@ -20,7 +20,7 @@ void test_audio(void)
 
     audio_init();
 
-    audio_play("car.wav", 255, false);
+    audio_play("car.wav", 128, false);
 
     for (;;)
     {
