@@ -9,30 +9,9 @@
 #include "vsync.pio.h"
 #include "rgb.pio.h"
 // Header file
-#include "vga16_graphics_v2.h"
+#include "vga_graphics.h"
 // Font file
 #include "glcdfont.c"
-#include "font_rom_brl4.h"
-#include <string.h>
-
-/*
-- GPIO 16 ---> VGA Hsync
-- GPIO 17 ---> VGA Vsync
-- GPIO 18 ---> VGA Green lo-bit --> 470 ohm resistor -->  VGA_Green
-- GPIO 19 ---> VGA Green hi_bit --> 330 ohm resistor -->  VGA_Green
-- GPIO 20 ---> 330 ohm resistor ---> VGA-Blue
-- GPIO 21 ---> 330 ohm resistor ---> VGA-Red
-- RP2040 GND ---> VGA-GND
-*/
-
-// modified 5/12/25 by Bruce
-// --added settable channel priority for rgb DMA channel
-// --added fused FIFO for rgb state machine
-// --added PIO CLAIM for 3 machines in PIO0
-// --modified drawHLine for faster execution using memset
-// --modified fillRect to use modified drawLine
-// --added fast clear function for a rectangle
-// --added readPixel to interrogate VGA display buffer
 
 // VGA timing constants
 #define H_ACTIVE   655    // (active + frontporch - 1) - one cycle delay for mov
@@ -50,8 +29,8 @@ unsigned char vga_data_array[TXCOUNT];
 char * address_pointer = &vga_data_array[0] ;
 
 // Bit masks for drawPixel routine
-#define TOPMASK 0b00001111
-#define BOTTOMMASK 0b11110000
+#define TOPMASK 0b11000111
+#define BOTTOMMASK 0b11111000
 
 // For drawLine
 #define swap(a, b) { short t = a; a = b; b = t; }
@@ -89,13 +68,9 @@ void initVGA() {
     uint rgb_offset = pio_add_program(pio, &rgb_program);
 
     // Manually select a few state machines from pio instance pio0.
-    // void pio_sm_claim (PIO pio, uint sm)
     uint hsync_sm = 0;
     uint vsync_sm = 1;
     uint rgb_sm = 2;
-    pio_sm_claim (pio, hsync_sm);
-    pio_sm_claim (pio, vsync_sm);
-    pio_sm_claim (pio, rgb_sm);
 
     // Call the initialization functions that are defined within each PIO file.
     // Why not create these programs here? By putting the initialization function in
@@ -103,18 +78,16 @@ void initVGA() {
     // is consolidated in one place. Here in the C, we then just import and use it.
     hsync_program_init(pio, hsync_sm, hsync_offset, HSYNC);
     vsync_program_init(pio, vsync_sm, vsync_offset, VSYNC);
-    rgb_program_init(pio, rgb_sm, rgb_offset, LO_GRN);
+    rgb_program_init(pio, rgb_sm, rgb_offset, RED_PIN);
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////
     // ============================== PIO DMA Channels =================================================
     /////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // DMA channels - 0 sends color data, 1 reconfigures and restarts 0
-    int rgb_chan_0 = dma_claim_unused_channel(true);
-    int rgb_chan_1 = dma_claim_unused_channel(true);
-
-    // change this to true of other DMA channels interfer with video
-    #define rgb_high_priority false
+    int rgb_chan_0 = 0;
+    int rgb_chan_1 = 1;
 
     // Channel Zero (sends color data to PIO VGA machine)
     dma_channel_config c0 = dma_channel_get_default_config(rgb_chan_0);  // default configs
@@ -123,7 +96,6 @@ void initVGA() {
     channel_config_set_write_increment(&c0, false);                      // no write incrementing
     channel_config_set_dreq(&c0, DREQ_PIO0_TX2) ;                        // DREQ_PIO0_TX2 pacing (FIFO)
     channel_config_set_chain_to(&c0, rgb_chan_1);                        // chain to other channel
-    channel_config_set_high_priority (&c0, rgb_high_priority) ;
 
     dma_channel_configure(
         rgb_chan_0,                 // Channel to be configured
@@ -174,9 +146,6 @@ void initVGA() {
     dma_start_channel_mask((1u << rgb_chan_0)) ;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-// ============================== Drawing routines  =================================================
-/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // A function for drawing a pixel with a specified color.
 // Note that because information is passed to the PIO state machines through
@@ -184,26 +153,24 @@ void initVGA() {
 // pixels will be automatically updated on the screen.
 void drawPixel(short x, short y, char color) {
     // Range checks (640x480 display)
-    // if (x > 639) x = 639 ;
-    // if (x < 0) x = 0 ;
-    // if (y < 0) y = 0 ;
-    // if (y > 479) y = 479 ;
-    if((x > 639) | (x < 0) | (y > 479) | (y < 0) ) return;
+    if (x > 639) x = 639 ;
+    if (x < 0) x = 0 ;
+    if (y < 0) y = 0 ;
+    if (y > 479) y = 479 ;
 
     // Which pixel is it?
     int pixel = ((640 * y) + x) ;
 
-    // Is this pixel stored in the first 4 bits
+    // Is this pixel stored in the first 3 bits
     // of the vga data array index, or the second
-    // 4 bits? Check, then mask.
+    // 3 bits? Check, then mask.
     if (pixel & 1) {
-        vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & TOPMASK) | (color << 4) ;
+        vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & TOPMASK) | (color << 3) ;
     }
     else {
         vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & BOTTOMMASK) | (color) ;
     }
 }
-
 
 void drawVLine(short x, short y, short h, char color) {
     for (short i=y; i<(y+h); i++) {
@@ -211,31 +178,10 @@ void drawVLine(short x, short y, short h, char color) {
     }
 }
 
-void drawHLine(int x, int y, int w, char color) {
-  // range checks
-  if((x >= _width) || (y >= _height)) return;
-  if((x + w - 1) >= _width)  w = _width  - x - 1;
-  //
-  //short xx = x;
-  short both_color = color | (color<<4) ;
-  // loner pixel at x -- align left with next byte boundary
-  if((x & 1)) {
-    drawPixel(x,y,color);
-    x++ ;
-    w-- ;
-  }
-  // draw loner pixel at end and adjust width
-  if((w & 1)){
-    drawPixel(x+w-1, y, color);
-    w-- ;
-  }
-  // draw rest of line
-  int len = (w>>1)  ;
-  if (len>0 && y<480 ) memset(&vga_data_array[320*y+(x>>1)], both_color, len) ;
- // original code
-    // for (int i=x; i<=(x+w); i++) {
-    //     drawPixel(i, y, color) ;
-    // }
+void drawHLine(short x, short y, short w, char color) {
+    for (short i=x; i<(x+w); i++) {
+        drawPixel(i, y, color) ;
+    }
 }
 
 // Bresenham's algorithm - thx wikipedia and thx Bruce!
@@ -488,18 +434,15 @@ void fillRect(short x, short y, short w, short h, char color) {
 
   // rudimentary clipping (drawChar w/big text requires this)
   // if((x >= _width) || (y >= _height)) return;
-  // if((x + w - 1) >= _width)  w = _width  - x - 1;
-   if((y + h - 1) >= _height) h = _height - y - 1;
+  // if((x + w - 1) >= _width)  w = _width  - x;
+  // if((y + h - 1) >= _height) h = _height - y;
 
   // tft_setAddrWindow(x, y, x+w-1, y+h-1);
 
-  // for(int i=x; i<(x+w); i++) {
-  //   for(int j=y; j<(y+h); j++) {
-  //       drawPixel(i, j, color);
-  //   }
-  // }
-  for(int j=y; j<(y+h); j++) {
-    drawHLine(x, j, w, color) ;
+  for(int i=x; i<(x+w); i++) {
+    for(int j=y; j<(y+h); j++) {
+        drawPixel(i, j, color);
+    }
   }
 }
 
@@ -536,6 +479,7 @@ void drawChar(short x, short y, unsigned char c, char color, char bg, unsigned c
     }
   }
 }
+
 
 inline void setCursor(short x, short y) {
 /* Set cursor for text to be printed
@@ -608,113 +552,3 @@ inline void writeString(char* str){
         tft_write(*str++);
     }
 }
-
-//=================================================
-// added 10/16/2023 brl4
-inline void setTextColorBig(char color, char background) {
-/* Set color of text to be displayed
- * Parameters:
- *      color = 16-bit color of text
- *      b = 16-bit color of text background
- *      background ==-1 means trasnparten background
- */
-  textcolor   = color;
-  textbgcolor = background;
-}
-//=================================================
-// added 10/11/2023 brl4
-// Draw a character
-void drawCharBig(short x, short y, unsigned char c, char color, char bg) {
-  char i, j ;
-  unsigned char line; 
-  for (i=0; i<15; i++ ) {   
-    line = pgm_read_byte(bigFont+((int)c*16)+i);
-    for ( j = 0; j<8; j++) {
-      if (line & 0x80) {
-        drawPixel(x+j, y+i, color);
-      } else if (bg!=color){
-        drawPixel(x+j, y+i, bg);
-      }
-      line <<= 1;
-    }
-  }
-}
-
-inline void writeStringBig(char* str){
-/* Print text onto screen
- * Call tft_setCursor(), tft_setTextColorBig()
- *  as necessary before printing
- */
-    while (*str){
-      char c = *str++;
-        drawCharBig(cursor_x, cursor_y, c, textcolor, textbgcolor);
-        cursor_x += 8 ;
-    }
-}
-
-inline void writeStringBold(char* str){
-/* Print text onto screen
- * Call tft_setCursor(), tft_setTextColorBig()
- *  as necessary before printing
- */
-   /* Print text onto screen
- * Call tft_setCursor(), tft_setTextColor(), tft_setTextSize()
- *  as necessary before printing
- */
-    char temp_bg ;
-    temp_bg = textbgcolor;
-    while (*str){
-        char c = *str++;
-        drawChar(cursor_x, cursor_y, c, textcolor, textbgcolor, textsize);
-        drawChar(cursor_x+1, cursor_y, c, textcolor, textcolor, textsize);
-        cursor_x += 7 * textsize ;
-    }
-    textbgcolor = temp_bg ;
-}
-
-// /////////////////////////////////////////////
-// NOTE that there is NO RANGE check on these funcitons
-// They will clobber memory if x,y falls outside
-// the vga display boundaries (0,0) to (640,480)
-void clearRect(short x1, short y1, short x2, short y2, short c) {
-  for(int i=y1; i<y2; i++){
-    memset(&vga_data_array[320*i+(x1>>1)], c | (c<<4), (x2-x1)>>1) ;
-  };
-}
-
-void clearLowFrame(short top, short c) {
-    memset(&vga_data_array[320*top], c | (c<<4), (TXCOUNT-320*top) );
-}
-
-//////////////////////////////////////////////////
-// get the color of a pixel
-short readPixel(short x, short y) {
-  // Which pixel is it?
-  int pixel = ((640 * y) + x) ;
-  short color ;
-  // Is this pixel stored in the first 4 bits
-  // of the vga data array index, or the second
-  // 4 bits? Check, then mask.
-  if (pixel & 1) {
-      color = vga_data_array[pixel>>1] >> 4 ;
-  }
-  else {
-      color = vga_data_array[pixel>>1] & 0xf  ;
-  }
-  return color ;
-}
-
-///////////////////////////////////////////////
-void crosshair(short x, short y, short c){
-  drawPixel(x,y,c);
-  drawPixel(x-1,y,c);
-  drawPixel(x+1,y,c);
-  drawPixel(x,y-1,c);
-  drawPixel(x,y+1,c);
-  drawPixel(x-2,y,c);
-  drawPixel(x+2,y,c);
-  drawPixel(x,y-2,c);
-  drawPixel(x,y+2,c);
-}
-
-///////////////////////////////////////////////
