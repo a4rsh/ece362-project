@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "gyro.h"
 #include "audio.h"
+#include "vga.h"
 
 void test_gyro(void);
 void test_audio(void);
@@ -12,7 +13,8 @@ int main()
     sleep_ms(2000);
 
     // test_gyro();
-    test_audio();
+    // test_audio();
+    test_vga();
 }
 
 void test_audio(void)
