@@ -5,6 +5,10 @@
         "gyro.h": "c",
         "string.h": "c",
         "dot.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "audio.h": "c",
+        "ff.h": "c",
+        "stdbool.h": "c",
+        "game_dot.h": "c"
     }
 }
