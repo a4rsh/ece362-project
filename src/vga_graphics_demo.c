@@ -25,6 +25,8 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/dma.h"
+#include "game_dot.h"
+
 // // Our assembled programs:
 // // Each gets the name <pio_filename.pio.h>
 // #include "hsync.pio.h"
@@ -50,9 +52,11 @@ void vga_init() {
     initVGA();
 }
 
-void update_graphics(float angleX, float angleY, float angleZ) {
-    fillRect(0, 0, 640, 480, BLACK);
+void update_graphics(float angleX, float angleY, float angleZ, GameDot *dot1) {
+    // fillRect(0, 0, 640, 480, BLACK);
+    fillCircle(-dot1->angleZ * (320/45) + 320, 240, 10, BLACK);
     fillCircle(-angleZ * (320/45) + 320, 240/*angleX * (240/45) + 240*/, 10, WHITE);
+    dot1->angleZ = angleZ; 
 }
 
 /*

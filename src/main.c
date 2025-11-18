@@ -2,9 +2,9 @@
 #include "pico/stdlib.h"
 #include "gyro.h"
 #include "audio.h"
-
+#include "game_dot.h"
 void vga_init();
-void update_graphics(float angleX, float angleY, float angleZ);
+void update_graphics(float angleX, float angleY, float angleZ, GameDot *dot1);
 
 void test_gyro(void);
 void test_audio(void);
@@ -65,6 +65,9 @@ void graphics_demo(void)
     gyro_init();
     vga_init();
 
+    GameDot dot1; 
+    dot1.angleZ = 0.0;
+
     int res;
     float angleX = 0, angleY = 0, angleZ = 0;
 
@@ -77,8 +80,8 @@ void graphics_demo(void)
         }
         else
         {
-            update_graphics(angleX, angleY, angleZ);
+            update_graphics(angleX, angleY, angleZ, &dot1);
         }
-        sleep_ms(10);
+        sleep_ms(5);
     }
 }

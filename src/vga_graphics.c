@@ -196,7 +196,7 @@ void drawLine(short x0, short y0, short x1, short y1, char color) {
  *          the top-left of the screen is 0. It increases to the right.
  *      y1: y-coordinate of ending point of line. The y-coordinate of
  *          the top-left of the screen is 0. It increases to the bottom.
- *      color: 3-bit color value for line
+ *      color: 3-bit color value for lifillRect(0, 0, 640, 480, BLACK);ne
  */
       short steep = abs(y1 - y0) > abs(x1 - x0);
       if (steep) {

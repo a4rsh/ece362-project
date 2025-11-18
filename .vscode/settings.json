@@ -3,6 +3,8 @@
         "*.c": "c",
         "i2c.h": "c",
         "gyro.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "dot.h": "c",
+        "stdlib.h": "c"
     }
 }
