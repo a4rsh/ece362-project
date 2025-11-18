@@ -15,7 +15,8 @@ ACCEL = 0.15
 FRICTION = 0.05
 TURN_RATE = 0.05
 CENTER_SCREEN = WIDTH // 2
-HORIZON = HEIGHT // 4
+HORIZON = HEIGHT // 2
+BACKGROUNG_WRAPAROUND = WIDTH * 2
 
 # --- State ---
 gear = 1
@@ -24,6 +25,8 @@ player_x = 0.0
 road_curve = 0.0
 curve_target = 0.0
 curve_timer = 0
+divider_offset = 0
+total_x = 0
 
 # buffer of road x-offsets (bottom → top)
 road_x = [0.0 for _ in range(NUM_SEGMENTS)]
@@ -32,7 +35,11 @@ road_x = [0.0 for _ in range(NUM_SEGMENTS)]
 BLACK = (0,0,0)
 WHITE = (255,255,255)
 RED = (255,80,80)
+SKY_BLUE = (64,168,229)
+GRASS_GREEN = (0, 179, 54)
 CAR_COLOR = (255,140,0)
+COLOR_YELLOW = (255, 215, 0)
+MOUNTAIN_GRAY = (119, 119, 119)
 font = pygame.font.SysFont(None, 24)
 
 # Add near the top of your code
@@ -43,8 +50,8 @@ COLOR_ALT_FLAG = [0]  # mutable container to remember alternation
 def draw_car():
     cx = CENTER_SCREEN
     pygame.draw.polygon(win, CAR_COLOR, [
-        (cx-80, HEIGHT),
-        (cx+80, HEIGHT),
+        (cx-60, HEIGHT),
+        (cx+60, HEIGHT),
         (cx+50, HEIGHT-40),
         (cx-50, HEIGHT-40)
     ])
@@ -59,6 +66,8 @@ def display_text(offroad):
 def update_road_buffer():
     """Advance road one segment forward and re-normalize the buffer."""
     global player_x
+    global total_x
+    
     delta = road_x[1] - road_x[0]
     # shift buffer
     for i in range(NUM_SEGMENTS - 1):
@@ -74,24 +83,37 @@ def update_road_buffer():
 
 def draw_road():
     """Draw each pair of posts with alternating red/white pattern."""
+    
+    pygame.draw.rect(win, GRASS_GREEN, (0, HORIZON, WIDTH, (HEIGHT-HORIZON)))
+    
     Y_OFFSET = int(HEIGHT * 0.10)
     for i in range(NUM_SEGMENTS):
         y = HEIGHT - i * POST_SPACING
-        depth = (y - HORIZON) / (HEIGHT - HORIZON)
-        y -= Y_OFFSET
-        width = ROAD_MIN_WIDTH + depth * (ROAD_MAX_WIDTH - ROAD_MIN_WIDTH)
-        cx = CENTER_SCREEN + ((road_x[i] - player_x) * 150) * (1 + i/NUM_SEGMENTS)
+        
+        if (y > HORIZON - 1):
+            # depth = (y - HORIZON) / (HEIGHT - HORIZON)
+            depth = (y - HORIZON) / (HEIGHT - HORIZON)
+            width = ROAD_MIN_WIDTH + depth * (ROAD_MAX_WIDTH - ROAD_MIN_WIDTH)
+            # cx = CENTER_SCREEN + ((road_x[i] - player_x) * 150) * (1 + i/NUM_SEGMENTS)
+            cx = CENTER_SCREEN + ((road_x[i] - player_x) * 120) * (2*(1-depth) + 1)
 
-        # Choose alternating colors, flipping with COLOR_ALT_FLAG
-        if (i + COLOR_ALT_FLAG[0]) % 2 == 0:
-            left_color = COLOR_RED
-            right_color = COLOR_WHITE
-        else:
-            left_color = COLOR_WHITE
-            right_color = COLOR_RED
+            # Choose alternating colors, flipping with COLOR_ALT_FLAG
+            if (i + COLOR_ALT_FLAG[0]) % 2 == 0:
+                left_color = COLOR_RED
+                right_color = COLOR_RED
+            else:
+                left_color = COLOR_WHITE
+                right_color = COLOR_WHITE
 
-        pygame.draw.rect(win, left_color,  (cx - width, y, 4, 6))
-        pygame.draw.rect(win, right_color, (cx + width - 4, y, 4, 6))
+            pygame.draw.rect(win, BLACK, (cx - width, y, width * 2, 8))
+            pygame.draw.rect(win, left_color,  (cx - width, y, 6, 8))
+            pygame.draw.rect(win, right_color, (cx + width - 2, y, 6, 8))
+            
+            global divider_offset
+            
+            if((y + divider_offset) % 10 > 3):
+                pygame.draw.rect(win, COLOR_YELLOW, (cx, y, 6, 8))
+                
 # --- Main loop ---
 while True:
     for e in pygame.event.get():
@@ -113,16 +135,17 @@ while True:
 
     # steering
     steer = 0
-    if keys[pygame.K_a]: steer = -1.2
-    elif keys[pygame.K_d]: steer = 1.2
+    if keys[pygame.K_a]: steer = -1.0
+    elif keys[pygame.K_d]: steer = 1.0
     player_x += steer * TURN_RATE * speed
 
     # random curvature
     curve_timer -= 1
     if curve_timer <= 0:
-        curve_target = random.uniform(-0.1, 0.1)
+        curve_target = random.uniform(-0.05, 0.05)
         curve_timer = random.randint(60, 180)
     road_curve += (curve_target - road_curve)*0.05
+
 
     # move road forward proportionally to speed
     advance = speed/4.0
@@ -130,15 +153,17 @@ while True:
     scroll_accum += advance
     while scroll_accum >= 1.0:
         update_road_buffer()
+        divider_offset += 1
         scroll_accum -= 1.0
     update_road_buffer.accum = scroll_accum
+    divider_offset %= 10
 
     # off-road check
     offroad = abs(player_x) > 0.8
     if offroad: speed *= 0.97
 
     # draw
-    win.fill(BLACK)
+    win.fill(SKY_BLUE)
     draw_road()
     draw_car()
     display_text(offroad)
