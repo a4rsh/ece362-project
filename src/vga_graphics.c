@@ -26,7 +26,7 @@
 // a pointer to the ADDRESS of this color array.
 // Note that this array is automatically initialized to all 0's (black)
 unsigned char vga_data_array[TXCOUNT];
-char * address_pointer = &vga_data_array[0] ;
+char * address_pointer = &vga_data_array[0];
 
 // Bit masks for drawPixel routine
 #define TOPMASK 0b11000111

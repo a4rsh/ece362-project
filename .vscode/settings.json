@@ -9,6 +9,11 @@
         "audio.h": "c",
         "ff.h": "c",
         "stdbool.h": "c",
-        "game_dot.h": "c"
+        "game_dot.h": "c",
+        "array": "c",
+        "string_view": "c",
+        "dma.h": "c",
+        "pio.h": "c",
+        "game.h": "c"
     }
 }
