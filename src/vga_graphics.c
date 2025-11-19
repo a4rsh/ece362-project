@@ -26,6 +26,7 @@
 // a pointer to the ADDRESS of this color array.
 // Note that this array is automatically initialized to all 0's (black)
 unsigned char vga_data_array[TXCOUNT];
+unsigned char vga_data_array_2[TXCOUNT];
 char * address_pointer = &vga_data_array[0];
 
 // Bit masks for drawPixel routine
@@ -48,6 +49,14 @@ char textcolor, textbgcolor, wrap;
 // Screen width/height
 #define _width 640
 #define _height 480
+
+void switchScreens(int screen) {
+  if(screen) {
+    address_pointer = &vga_data_array_2[0]; //2
+  } else {
+    address_pointer = &vga_data_array[0];
+  }
+}
 
 void initVGA() {
         // Choose which PIO instance to use (there are two instances, each with 4 state machines)
@@ -165,10 +174,39 @@ void drawPixel(short x, short y, char color) {
     // of the vga data array index, or the second
     // 3 bits? Check, then mask.
     if (pixel & 1) {
-        vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & TOPMASK) | (color << 3) ;
+      vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & TOPMASK) | (color << 3) ;
     }
     else {
+      vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & BOTTOMMASK) | (color) ;
+    }
+}
+
+void drawPixelScreenSelect(short x, short y, char color, int screen) {
+    // Range checks (640x480 display)
+    if (x > 639) x = 639 ;
+    if (x < 0) x = 0 ;
+    if (y < 0) y = 0 ;
+    if (y > 479) y = 479 ;
+
+    // Which pixel is it?
+    int pixel = ((640 * y) + x) ;
+
+    // Is this pixel stored in the first 3 bits
+    // of the vga data array index, or the second
+    // 3 bits? Check, then mask.
+    if (pixel & 1) {
+        if(screen == 0) {
+          vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & TOPMASK) | (color << 3) ;
+        } else {
+          vga_data_array_2[pixel>>1] = (vga_data_array_2[pixel>>1] & TOPMASK) | (color << 3) ; //2
+        }
+    }
+    else {
+      if(screen == 0) {
         vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & BOTTOMMASK) | (color) ;
+      } else {
+        vga_data_array_2[pixel>>1] = (vga_data_array_2[pixel>>1] & BOTTOMMASK) | (color) ; //2
+      }
     }
 }
 
@@ -445,6 +483,51 @@ void fillRect(short x, short y, short w, short h, char color) {
     }
   }
 }
+
+void fillRectScreenSelect(short x, short y, short w, short h, char color, int screen) {
+/* Draw a filled rectangle with starting top-left vertex (x,y),
+ *  width w and height h with given color
+ * Parameters:
+ *      x:  x-coordinate of top-left vertex; top left of screen is x=0
+ *              and x increases to the right
+ *      y:  y-coordinate of top-left vertex; top left of screen is y=0
+ *              and y increases to the bottom
+ *      w:  width of rectangle
+ *      h:  height of rectangle
+ *      color:  3-bit color value
+ * Returns:     Nothing
+ */
+
+  // rudimentary clipping (drawChar w/big text requires this)
+  // if((x >= _width) || (y >= _height)) return;
+  // if((x + w - 1) >= _width)  w = _width  - x;
+  // if((y + h - 1) >= _height) h = _height - y;
+
+  // tft_setAddrWindow(x, y, x+w-1, y+h-1);
+
+  int pixel;
+  if(screen == 0) {
+    for(int i=x; i<(x+w); i++) {
+      for(int j=y; j<(y+h); j++) {
+          pixel = ((640 * j) + i) ;
+          vga_data_array[pixel>>1] = (vga_data_array[pixel>>1] & 0b11000000) | ((color << 3) | color) ;
+      }
+    }
+  } else {
+    for(int i=x; i<(x+w); i++) {
+      for(int j=y; j<(y+h); j++) {
+          pixel = ((640 * j) + i) ;
+          vga_data_array_2[pixel>>1] = (vga_data_array_2[pixel>>1] & 0b11000000) | ((color << 3) | color) ; //2
+      }
+    }
+  }
+
+    // Is this pixel stored in the first 3 bits
+    // of the vga data array index, or the second
+    // 3 bits? Check, then mask.
+}
+
+
 
 // Draw a character
 void drawChar(short x, short y, unsigned char c, char color, char bg, unsigned char size) {

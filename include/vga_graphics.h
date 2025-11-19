@@ -29,6 +29,9 @@ enum vga_pins {HSYNC=16, VSYNC, RED_PIN, GREEN_PIN, BLUE_PIN} ;
 enum colors {BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE} ;
 
 // VGA primitives - usable in main
+void drawPixelScreenSelect(short x, short y, char color, int screen) ;
+void fillRectScreenSelect(short x, short y, short w, short h, char color, int screen) ;
+void switchScreens(int screen) ;
 void initVGA(void) ;
 void drawPixel(short x, short y, char color) ;
 void drawVLine(short x, short y, short h, char color) ;

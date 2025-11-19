@@ -14,6 +14,10 @@
         "string_view": "c",
         "dma.h": "c",
         "pio.h": "c",
-        "game.h": "c"
+        "game.h": "c",
+        "stdio.h": "c",
+        "vga_graphics.h": "c",
+        "address_mapped.h": "c",
+        "systick.h": "c"
     }
 }
