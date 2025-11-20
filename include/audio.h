@@ -16,4 +16,12 @@ void audio_stop(void);
 void audio_set_volume(uint8_t volume);
 int64_t audio_update(alarm_id_t id, void *user_data);
 
+typedef enum AudioMode {
+    BRAKING,
+    STOPPED,
+    ACCELERATING
+} AudioMode_t;
+
+void updateAudioMode(float change, float speed, uint8_t volume);
+
 #endif

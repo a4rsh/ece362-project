@@ -80,6 +80,7 @@ void start_game()
 {
     gyro_init();
     vga_init();
+    audio_init();
     accel_init();
 
     int res;

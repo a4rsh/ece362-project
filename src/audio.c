@@ -18,6 +18,8 @@ static uint slice_num;
 
 static alarm_id_t audio_alarm_id = 0;
 
+static AudioMode_t audioMode;
+
 
 static void audio_set_pwm(int level) {
     pwm_set_chan_level(slice_num, PWM_CHAN_A, level);
@@ -43,8 +45,6 @@ static void refill_buffer(void) {
 }
 
 int64_t audio_update(alarm_id_t id, void *user_data) {
-
-    
 
     if (!audio_active) {
         audio_set_pwm(PERIOD / 2);
@@ -96,6 +96,8 @@ void audio_init(void) {
     audio_active = false;
     buffer_pos = 0;
     buffer_len = 0;
+
+    audioMode = STOPPED;
 }
 
 bool audio_play(const char *filename, uint8_t vol, bool loop) {
@@ -132,4 +134,31 @@ void audio_stop(void) {
 
 void audio_set_volume(uint8_t vol) {
     volume = vol;
+}
+
+void updateAudioMode(float change, float speed, uint8_t volume) {
+
+    AudioMode_t nextAudioMode = STOPPED;
+    if (speed != 0.0) {
+        if (change > 0.0) {
+            nextAudioMode = ACCELERATING;
+        } else {
+            nextAudioMode = BRAKING;
+        }
+    }
+
+    if (audioMode != nextAudioMode) {
+        switch (nextAudioMode) {
+            case BRAKING:
+                audio_play("brake.wav", volume, true);
+            break;
+            case STOPPED:
+                audio_stop();
+            break;
+            case ACCELERATING:
+                audio_play("accel.wav", volume, true);
+            break;
+        }
+    }
+    audioMode = nextAudioMode;
 }

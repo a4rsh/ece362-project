@@ -1,8 +1,11 @@
 #include "accel.h"
 #include "math.h"
+#include "audio.h"
 
 const int GPIO_ACCEL = 26;
 const int GPIO_BRAKE = 25;
+
+static const uint8_t volume = 128;
 
 float speed;
 float time;
@@ -20,7 +23,7 @@ float updateSpeed() {
     bool brake = gpio_get(GPIO_BRAKE);
         
     float change = -0.00000002;
-    float newTime = get_absolute_time();
+
 
     if (accel ^ brake) {
         if (accel) {
@@ -30,6 +33,9 @@ float updateSpeed() {
         }
     }
 
+    updateAudioMode(change, speed, 32);
+
+    float newTime = get_absolute_time();
     speed += change * (newTime - time);
     speed = fmax(fmin(speed, 1.0), 0.0);
 
@@ -37,3 +43,4 @@ float updateSpeed() {
 
     return speed;
 }
+
