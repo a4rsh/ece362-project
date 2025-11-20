@@ -2,6 +2,7 @@
 #include "pico/stdlib.h"
 #include "gyro.h"
 #include "audio.h"
+#include "accel.h"
 #include "game_dot.h"
 #include <stdlib.h>
 #include "game.h"
@@ -36,7 +37,6 @@ int main()
     // draw_road(roadBuffer, &player_x, 1);
 
     start_game();
-
 }
 
 void test_audio(void)
@@ -80,6 +80,7 @@ void start_game()
 {
     gyro_init();
     vga_init();
+    accel_init();
 
     int res;
     float angleX = 0, angleY = 0, angleZ = 0;
@@ -190,6 +191,8 @@ void start_game()
         
         //printf("roadbuffer[0]: %d, player_x: %d, delta: %d, steer: %lf, curve_timer: %d, road_curve: %lf, speed: %d, before: %lu%lu, after: %lu%lu, difference: %u\n", roadBuffer[0], player_x, delta, steer, curve_timer, road_curve, speed, (uint32_t)(before >> 32), (uint32_t)(before & 0xffffffff), (uint32_t)(after >> 32), (uint32_t)(after & 0xffffffff), difference);
         //printf("difference: %u\n", difference);
+        
+        speed = (int) (updateSpeed() * 5);
 
         sleep_ms(30);
     }
