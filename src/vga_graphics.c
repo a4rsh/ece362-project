@@ -58,6 +58,17 @@ void switchScreens(int screen) {
   }
 }
 
+void crash_effect(int screen) { //This function only supports screen 1
+    if(screen) {
+      for(int i = 0; i < _width; i++) {
+        for(int j = 0; j < _height; j++) {
+          int pixel = ((640 * j) + i);
+          vga_data_array_2[pixel >> 1] |= 0x9;
+        }
+      }
+    }
+}
+
 void initVGA() {
         // Choose which PIO instance to use (there are two instances, each with 4 state machines)
     PIO pio = pio0;
@@ -527,7 +538,39 @@ void fillRectScreenSelect(short x, short y, short w, short h, char color, int sc
     // 3 bits? Check, then mask.
 }
 
+// Draw a character
+void drawCharScreenSelect(short x, short y, unsigned char c, char color, char bg, unsigned char size, int screen) {
+    char i, j;
+  if((x >= _width)            || // Clip right
+     (y >= _height)           || // Clip bottom
+     ((x + 6 * size - 1) < 0) || // Clip left
+     ((y + 8 * size - 1) < 0))   // Clip top
+    return;
 
+  for (i=0; i<6; i++ ) {
+    unsigned char line;
+    if (i == 5)
+      line = 0x0;
+    else
+      line = pgm_read_byte(font+(c*5)+i);
+    for ( j = 0; j<8; j++) {
+      if (line & 0x1) {
+        if (size == 1) // default size
+          drawPixelScreenSelect(x+i, y+j, color, screen);
+        else {  // big size
+          fillRectScreenSelect(x+(i*size), y+(j*size), size, size, color, screen);
+        }
+      } else if (bg != color) {
+        if (size == 1) // default size
+          drawPixelScreenSelect(x+i, y+j, bg, screen);
+        else {  // big size
+          fillRectScreenSelect(x+i*size, y+j*size, size, size, bg, screen);
+        }
+      }
+      line >>= 1;
+    }
+  }
+}
 
 // Draw a character
 void drawChar(short x, short y, unsigned char c, char color, char bg, unsigned char size) {

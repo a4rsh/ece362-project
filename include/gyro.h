@@ -8,7 +8,7 @@
 #include "pico/float.h"
 #define RAD_2_DEG 57.29578
 #define CALIBRATE_SAMPLES 500
-#define DEFAULT_GYRO_COEF 0.98
+#define DEFAULT_GYRO_COEF 0.80
 
 void gyro_init();
 void gyro_reset();

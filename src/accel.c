@@ -44,3 +44,7 @@ float updateSpeed() {
     return speed;
 }
 
+void setZeroSpeed() {
+    speed = 0;
+}
+

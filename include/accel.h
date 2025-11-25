@@ -4,3 +4,4 @@
 
 void accel_init();
 float updateSpeed();
+void setZeroSpeed();

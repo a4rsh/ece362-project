@@ -93,8 +93,6 @@ void start_game()
     };
     #undef X
 
-    printf("Speed gets hard set to gear speed 1 = %d\n", gear_speeds[1]);
-
     int speed = gear_speeds[1];
     double steer;
     int curve_timer = 5;
@@ -103,6 +101,10 @@ void start_game()
     int player_x = WIDTH/2;
     int delta;
     int colorFlag = 0;
+    int score = 0;
+    int crash = 0;
+    int pastCrash = 0;
+    uint32_t timeCrashed = time_us_32();
 
     int roadBuffer[HEIGHT-HORIZON];
 
@@ -111,18 +113,12 @@ void start_game()
         roadBuffer[i] = WIDTH / 2;
     }
 
-    srand((int) angleX * 100); //This is most likely wrong. And it's the reason everything breaks.
+    srand((int) angleX * 100);
 
     int screen = 0; //This keeps track of what screen we are drawing to
 
-    systick_hw -> rvr = 0xFFFFFF;
-    systick_hw -> csr = 1 | (1 << 2);
-    printf("csr: %d\n", systick_hw -> csr);
-
-    printf("rvr: %d\n", systick_hw -> rvr);
-
-    draw_bg(0);
-    draw_bg(1);
+    draw_bg(0, 0);
+    draw_bg(0, 1);
 
     for (;;)
     {
@@ -140,7 +136,7 @@ void start_game()
         }
 
         //Steering
-        steer = -angleZ;
+        steer = -angleX;
         player_x += (int) steer * TURN_RATE * speed;
 
         //Random curvature
@@ -174,24 +170,57 @@ void start_game()
 
         colorFlag ^= (speed % 2); //Update color in each row
 
-        if(abs(player_x - roadBuffer[0]) > 30) {
+        score += speed;
+
+        if(abs(player_x - roadBuffer[0]) > 50) {
 //            speed = 1;
+            uint32_t newTime = time_us_32();
+            if(newTime - timeCrashed > 1000000) {
+                setZeroSpeed();
+                timeCrashed = newTime;
+                crash = 1;
+            }
+
+            if(speed > 0) {
+                score -= 5;
+                if(score < 0) {
+                    score = 0;
+                }
+            }
+        } else {
+            crash = 0;
         }
 
-        // volatile uint32_t before = systick_hw -> cvr;
-        // volatile uint32_t flagBefore = systick_hw -> csr;
         // This lags a lot
-        volatile uint64_t before = time_us_32();
-        draw_road(roadBuffer, &player_x, colorFlag, screen);
+        volatile uint32_t before = time_us_32();
+
+        if(screen) {
+            draw_road(roadBuffer, &player_x, colorFlag, crash, screen);
+            draw_score(score, crash, screen);
+        } else {
+            draw_road(roadBuffer, &player_x, colorFlag, 0, screen);
+            draw_score(score, 0, screen);
+        }
+
+        if(crash != pastCrash) {
+            if(crash) {
+                draw_bg(1, 1);
+            } else {
+                draw_bg(0, 1);
+            }
+            pastCrash = crash;
+        }
+
         switchScreens(screen);
-        volatile uint64_t after = time_us_32();
-        // volatile uint32_t after = systick_hw -> cvr;
-        // volatile uint32_t flagAfter = systick_hw -> csr >> 16;
+        volatile uint32_t after = time_us_32();
 
         uint32_t difference = after - before;
         
         //printf("roadbuffer[0]: %d, player_x: %d, delta: %d, steer: %lf, curve_timer: %d, road_curve: %lf, speed: %d, before: %lu%lu, after: %lu%lu, difference: %u\n", roadBuffer[0], player_x, delta, steer, curve_timer, road_curve, speed, (uint32_t)(before >> 32), (uint32_t)(before & 0xffffffff), (uint32_t)(after >> 32), (uint32_t)(after & 0xffffffff), difference);
         //printf("difference: %u\n", difference);
+        printf("Steer: %f\n", steer);
+        printf("Speed: %d\n", speed);
+        printf("Crash: %d\n", crash);
         
         speed = (int) (updateSpeed() * 5);
 
