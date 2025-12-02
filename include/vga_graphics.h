@@ -31,6 +31,8 @@ enum colors {BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE} ;
 // VGA primitives - usable in main
 void drawPixelScreenSelect(short x, short y, char color, int screen) ;
 void fillRectScreenSelect(short x, short y, short w, short h, char color, int screen) ;
+void fillTriangleScreenSelect(short x, short y, short w, short h, char color, int screen);
+void drawF1Front(short x, short y, short w, short h, char color, int screen);
 void drawCharScreenSelect(short x, short y, unsigned char c, char color, char bg, unsigned char size, int screen) ;
 void switchScreens(int screen) ;
 void crash_effect(int screen) ;

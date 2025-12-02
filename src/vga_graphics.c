@@ -538,6 +538,82 @@ void fillRectScreenSelect(short x, short y, short w, short h, char color, int sc
     // 3 bits? Check, then mask.
 }
 
+void drawF1Front(short x, short y, short w, short h, char color, int screen) {
+    int pixel;
+    short center_x = x + (w / 2);
+
+    short h_wing = h / 4;
+    short h_nose = h - h_wing;
+
+    short y_wing_start = y;
+    short y_wing_end = y + h_wing;
+    short wing_thickness = h_wing / 2;
+
+    short w_main_plane = w;
+    short y_main_plane = y_wing_start + (h_wing / 2) - (wing_thickness / 2);
+
+    for (int j = y_main_plane; j < (y_main_plane + wing_thickness); j++) {
+        for (int i = x; i < (x + w_main_plane); i++) {
+            pixel = ((640 * j) + i);
+            if (screen == 0) {
+                vga_data_array[pixel >> 1] = (vga_data_array[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            } else {
+                vga_data_array_2[pixel >> 1] = (vga_data_array_2[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            }
+        }
+    }
+
+    short y_nose_start = y_wing_end - 20;
+    short y_nose_end = y + h;
+
+    for (int j = y_nose_start; j < y_nose_end; j++) {
+        short y_dist_from_start = j - y_nose_start;
+
+        float taper_factor = (float)y_dist_from_start / (float)h_nose;
+
+        short w_start_taper = w / 5;
+        short w_end_taper = w / 3;
+
+        short w_current = w_start_taper + (short)((float)(w_end_taper - w_start_taper) * taper_factor);
+
+        short current_half_w = w_current / 2;
+        short x_start = center_x - current_half_w;
+        short x_end = center_x + current_half_w;
+
+        for (int i = x_start; i <= x_end; i++) {
+            pixel = ((640 * j) + i);
+            if (screen == 0) {
+                vga_data_array[pixel >> 1] = (vga_data_array[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            } else {
+                vga_data_array_2[pixel >> 1] = (vga_data_array_2[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            }
+        }
+    }
+}
+
+void fillTriangleScreenSelect(short x, short y, short w, short h, char color, int screen) {
+    float half_w = (float)w / 2.0;
+    short center_x = x + half_w;
+    int pixel;
+    
+    for (int j = y; j < (y + h); j++) {
+        short y_dist_from_tip = j - y;
+        short current_half_width = (short)(((float)y_dist_from_tip / (float)h) * half_w);
+        short x_start = center_x - current_half_width;
+        short x_end = center_x + current_half_width;
+
+        for (int i = x_start; i <= x_end; i++) {
+            if (screen == 0) {
+                pixel = ((640 * j) + i);
+                vga_data_array[pixel >> 1] = (vga_data_array[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            } else {
+                pixel = ((640 * j) + i);
+                vga_data_array_2[pixel >> 1] = (vga_data_array_2[pixel >> 1] & 0b11000000) | ((color << 3) | color);
+            }
+        }
+    }
+}
+
 // Draw a character
 void drawCharScreenSelect(short x, short y, unsigned char c, char color, char bg, unsigned char size, int screen) {
     char i, j;

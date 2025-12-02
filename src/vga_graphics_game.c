@@ -20,6 +20,7 @@ void draw_bg(int crash, int screen) {
 
     char blue = BLUE;
     char black = BLACK;
+    char magenta = MAGENTA;
 
     if(crash) {
         blue |= 0x9;
@@ -27,6 +28,9 @@ void draw_bg(int crash, int screen) {
     }
 
     fillRectScreenSelect(0, 0, WIDTH, HORIZON, blue, screen);
+    for(int i = 0; i < WIDTH; i = i + 50) {
+        fillTriangleScreenSelect(i, 200, 50, 50, magenta, screen);
+    }
     //fillRectScreenSelect(0, HEIGHT - HORIZON - 1, WIDTH, HEIGHT - HORIZON, GREEN, screen);
     drawCharScreenSelect(50, 50, 'S', black, blue, 5, screen);
     drawCharScreenSelect(80, 50, 'c', black, blue, 5, screen);
@@ -149,4 +153,7 @@ void draw_road(int* roadBuffer, int* player_x, int colorFlag, int crash, int scr
                 }
             }
     }
+
+    drawF1Front(270, 370, 100, 100, RED, screen);
+
 }
