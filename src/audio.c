@@ -1,7 +1,7 @@
 #include "audio.h"
 
-static const uint PWM_AUDIO_RIGHT = 6;
-static const uint PWM_AUDIO_LEFT = 7;
+static const uint PWM_AUDIO_RIGHT = 34;
+static const uint PWM_AUDIO_LEFT = 35;
 static const uint PERIOD = 255;
 static uint32_t sample_delay_us = 12;
 // sample_delay_us = (1000000 / sample_rate) - 30;

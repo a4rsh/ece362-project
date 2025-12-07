@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include "audio.h"
 
-spi_inst_t *sd = spi0; // the SPI interface to use for the SD card
+spi_inst_t *sd = spi1; // the SPI interface to use for the SD card
 
-const int SD_MISO = 36;
-const int SD_CS   = 37;
-const int SD_SCK  = 38;
-const int SD_MOSI = 35;
+const int SD_MISO = 28;
+const int SD_CS   = 29;
+const int SD_SCK  = 30;
+const int SD_MOSI = 31;
 
 static FATFS fs;
 
