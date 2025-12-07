@@ -105,6 +105,7 @@ void start_game()
     int crash = 0;
     int pastCrash = 0;
     uint32_t timeCrashed = time_us_32();
+    int offset = 0;
 
     int roadBuffer[HEIGHT-HORIZON];
 
@@ -119,6 +120,8 @@ void start_game()
 
     draw_bg(0, 0);
     draw_bg(0, 1);
+    draw_mountains(0, 0, 0);
+    draw_mountains(0, 0, 1);
 
     for (;;)
     {
@@ -154,7 +157,7 @@ void start_game()
 
         //Update road buffer
         //divider_offset += speed;
-        //divider_offset %= 10;
+        //divider_offset %= 10;n
         delta = roadBuffer[1] - roadBuffer[0];
 
         for(int i = 0; i < HEIGHT - HORIZON - speed; i++) {
@@ -197,9 +200,11 @@ void start_game()
         if(screen) {
             draw_road(roadBuffer, &player_x, colorFlag, crash, screen);
             draw_score(score, crash, screen);
+            // draw_mountains(roadBuffer[HEIGHT-HORIZON-1], crash, screen);
         } else {
             draw_road(roadBuffer, &player_x, colorFlag, 0, screen);
             draw_score(score, 0, screen);
+            // draw_mountains(roadBuffer[HEIGHT-HORIZON-1], 0, screen);
         }
 
         if(crash != pastCrash) {
@@ -217,7 +222,7 @@ void start_game()
         uint32_t difference = after - before;
         
         //printf("roadbuffer[0]: %d, player_x: %d, delta: %d, steer: %lf, curve_timer: %d, road_curve: %lf, speed: %d, before: %lu%lu, after: %lu%lu, difference: %u\n", roadBuffer[0], player_x, delta, steer, curve_timer, road_curve, speed, (uint32_t)(before >> 32), (uint32_t)(before & 0xffffffff), (uint32_t)(after >> 32), (uint32_t)(after & 0xffffffff), difference);
-        //printf("difference: %u\n", difference);
+        printf("difference: %u\n", difference);
         printf("Steer: %f\n", steer);
         printf("Speed: %d\n", speed);
         printf("Crash: %d\n", crash);

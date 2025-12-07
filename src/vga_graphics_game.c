@@ -28,9 +28,9 @@ void draw_bg(int crash, int screen) {
     }
 
     fillRectScreenSelect(0, 0, WIDTH, HORIZON, blue, screen);
-    for(int i = 0; i < WIDTH; i = i + 50) {
-        fillTriangleScreenSelect(i, 200, 50, 50, magenta, screen);
-    }
+    // for(int i = 0; i < WIDTH; i = i + 50) {
+    //     fillTriangleScreenSelect(i, 200, 50, 50, magenta, screen);
+    // }
     //fillRectScreenSelect(0, HEIGHT - HORIZON - 1, WIDTH, HEIGHT - HORIZON, GREEN, screen);
     drawCharScreenSelect(50, 50, 'S', black, blue, 5, screen);
     drawCharScreenSelect(80, 50, 'c', black, blue, 5, screen);
@@ -38,6 +38,23 @@ void draw_bg(int crash, int screen) {
     drawCharScreenSelect(140, 50, 'r', black, blue, 5, screen);
     drawCharScreenSelect(170, 50, 'e', black, blue, 5, screen);
     drawCharScreenSelect(195, 40, ':', black, blue, 8, screen);
+}
+
+void draw_mountains(int offset, int crash, int screen) { //Unused
+    char blue = BLUE;
+    char black = BLACK;
+    char magenta = MAGENTA;
+
+    if(crash) {
+        blue |= 0x9;
+        black |= 0x9;
+    }
+
+    fillRectScreenSelect(0, 200, WIDTH, 50, blue, screen);
+
+    if(offset > 0 && offset < WIDTH - 50){
+        fillTriangleScreenSelect(offset, 200, 50, 50, magenta, screen);
+    }
 }
 
 void draw_score(int score, int crash, int screen) {

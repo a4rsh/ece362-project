@@ -2,6 +2,7 @@ void vga_init();
 void draw_bg(int crash, int screen);
 void draw_road(int* roadBuffer, int* player_x, int colorFlag, int crash, int screen);
 void draw_score(int score, int crash, int screen);
+void draw_mountains(int offset, int crash, int screen);
 
 //Parameters
 #define WIDTH 640
